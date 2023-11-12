@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	apps = map[string]func([]string, gobox.IOs) int{
+	apps = map[string]func([]string, *gobox.IOs) int{
 		"false": gobox.False,
 		"true":  gobox.True,
 	}
-	stdios = gobox.IOs{
+	stdios = &gobox.IOs{
 		In:  os.Stdin,
 		Out: os.Stdout,
 		Err: os.Stderr,
@@ -24,7 +24,7 @@ func main() {
 	os.Exit(Exec(os.Args, stdios))
 }
 
-func Exec(argv []string, ios gobox.IOs) int {
+func Exec(argv []string, ios *gobox.IOs) int {
 	argv[0] = filepath.Base(argv[0])
 
 	if argv[0] == "gobox" {
