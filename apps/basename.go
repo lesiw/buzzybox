@@ -35,14 +35,12 @@ func Basename(argv []string, ios *IOs) int {
 
 	if *allNames || *suffix != "" {
 		names = flags.Args()
+	} else if len(flags.Args()) > 2 {
+		fmt.Fprintln(ios.Err, "error: too many arguments")
+		return 1
 	} else {
-		if len(flags.Args()) > 2 {
-			fmt.Fprintln(ios.Err, "error: too many arguments")
-			return 1
-		} else {
-			*suffix = flags.Arg(1)
-			names = flags.Args()[:1]
-		}
+		*suffix = flags.Arg(1)
+		names = flags.Args()[:1]
 	}
 
 	for _, name := range names {
