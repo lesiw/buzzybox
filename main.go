@@ -10,8 +10,9 @@ import (
 
 var (
 	apps = map[string]func([]string, *gobox.IOs) int{
-		"false": gobox.False,
-		"true":  gobox.True,
+		"basename": gobox.Basename,
+		"false":    gobox.False,
+		"true":     gobox.True,
 	}
 	stdios = &gobox.IOs{
 		In:  os.Stdin,
