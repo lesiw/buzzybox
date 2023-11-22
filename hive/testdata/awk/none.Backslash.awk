@@ -1,0 +1,4 @@
+BEGIN {
+    print "A\
+B"
+}

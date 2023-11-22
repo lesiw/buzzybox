@@ -1,0 +1,1 @@
+BEGIN { FS="|" } { print NF }

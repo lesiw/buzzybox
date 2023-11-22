@@ -1,0 +1,2 @@
+line 1: BEGIN { 1/0 }
+                 ^ bad divisor: 0

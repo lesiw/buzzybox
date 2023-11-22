@@ -1,0 +1,25 @@
+print %s 2
+print %s 3
+print %s 
+print %d 1
+print %d 4
+print %d 0
+print %u 1
+print %u 18446744073709551615
+print %u 0
+print %c *
+print %c 4
+print %c ã
+print %c 0
+print %o 2
+print %o 3
+print %o 1777777777777777777777
+print %o 0
+print %x 2
+print %x 3
+print %x ffffffffffffffff
+print %x 0
+print %X 2
+print %X 3
+print %X FFFFFFFFFFFFFFFF
+print %X 0

@@ -1,0 +1,8 @@
+Hello, awk! 1
+biz bar baz 1
+||foo|| bar baz 1
+foobuzz bar baz 1
+||foo|| bar baz 1
+||&|| bar baz 1
+biz biz biz 3
+foo bar baz 0
