@@ -1,5 +1,5 @@
 package apps
 
-func True(_ []string, _ *IOs) int {
+func True([]string, *IOs) int {
 	return 0
 }
