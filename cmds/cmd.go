@@ -42,24 +42,26 @@ func CmdList() (cmds []string) {
 	return
 }
 
-func (c *Cmd) Run() (code int) {
-	defer func() { c.ExitCode = code }()
+func (c *Cmd) Run() int {
+	c.ExitCode = c.run()
+	return c.ExitCode
+}
+
+func (c *Cmd) run() int {
 	cmd := filepath.Base(c.Path)
 	if cmd == "gobox" {
 		if len(c.Args) < 2 {
 			// TODO: word wrap
 			fmt.Fprintf(c.Stderr, "Usage: gobox [command]\nCommands: %s\n",
 				strings.Join(CmdList(), ", "))
-			code = 1
-			return
+			return 1
 		}
 		c.Args = c.Args[1:]
 		c.Path = c.Args[0]
 		cmd = filepath.Base(c.Path)
 	}
 	if fn, ok := Cmds[cmd]; ok {
-		code = fn(c)
-		return
+		return fn(c)
 	} else if c.Fallback {
 		path, err := exec.LookPath(c.Path)
 		if err != nil {
@@ -70,11 +72,9 @@ func (c *Cmd) Run() (code int) {
 		if err = c.Cmd.Run(); err != nil && !errors.As(err, &ee) {
 			goto badcmd
 		}
-		code = c.ProcessState.ExitCode()
-		return
+		return c.ProcessState.ExitCode()
 	}
 badcmd:
 	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
-	code = 1
-	return
+	return 1
 }
