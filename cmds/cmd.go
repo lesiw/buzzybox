@@ -69,10 +69,9 @@ func (c *Cmd) Run() (code int) {
 		var ee *exec.ExitError
 		if err = c.Cmd.Run(); err != nil && !errors.As(err, &ee) {
 			goto badcmd
-		} else {
-			code = c.ProcessState.ExitCode()
-			return
 		}
+		code = c.ProcessState.ExitCode()
+		return
 	}
 badcmd:
 	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
