@@ -32,7 +32,8 @@ func Command(argv ...string) *Cmd {
 	return c
 }
 
-func (c *Cmd) Run() int {
+func (c *Cmd) Run() (code int) {
+	defer func() { c.ExitCode = code }()
 	cmd := filepath.Base(c.Path)
 	if cmd == "gobox" {
 		if len(c.Args) < 2 {
@@ -41,25 +42,32 @@ func (c *Cmd) Run() int {
 			for app := range Cmds {
 				fmt.Fprintln(c.Stderr, app)
 			}
-			return 1
+			code = 1
+			return
 		}
 		c.Args = c.Args[1:]
 		c.Path = c.Args[0]
 		cmd = filepath.Base(c.Path)
 	}
 	if fn, ok := Cmds[cmd]; ok {
-		c.ExitCode = fn(c)
+		code = fn(c)
+		return
 	} else if c.Fallback {
-		var ee *exec.ExitError
-		if err := c.Cmd.Run(); err != nil && !errors.As(err, &ee) {
-			fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
-			c.ExitCode = 1
-		} else {
-			c.ExitCode = c.ProcessState.ExitCode()
+		path, err := exec.LookPath(c.Path)
+		if err != nil {
+			goto badcmd
 		}
-	} else {
-		fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
-		c.ExitCode = 1
+		c.Path = path
+		var ee *exec.ExitError
+		if err = c.Cmd.Run(); err != nil && !errors.As(err, &ee) {
+			goto badcmd
+		} else {
+			code = c.ProcessState.ExitCode()
+			return
+		}
 	}
-	return c.ExitCode
+badcmd:
+	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
+	code = 1
+	return
 }
