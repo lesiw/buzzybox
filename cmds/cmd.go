@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
+	"strings"
 )
 
 type Cmd struct {
@@ -32,16 +34,22 @@ func Command(argv ...string) *Cmd {
 	return c
 }
 
+func CmdList() (cmds []string) {
+	for cmd := range Cmds {
+		cmds = append(cmds, cmd)
+	}
+	sort.Strings(cmds)
+	return
+}
+
 func (c *Cmd) Run() (code int) {
 	defer func() { c.ExitCode = code }()
 	cmd := filepath.Base(c.Path)
 	if cmd == "gobox" {
 		if len(c.Args) < 2 {
-			fmt.Fprintln(c.Stderr, "Usage: gobox [command]")
-			fmt.Fprintln(c.Stderr, "Available commands:")
-			for app := range Cmds {
-				fmt.Fprintln(c.Stderr, app)
-			}
+			// TODO: word wrap
+			fmt.Fprintf(c.Stderr, "Usage: gobox [command]\nCommands: %s\n",
+				strings.Join(CmdList(), ", "))
 			code = 1
 			return
 		}
