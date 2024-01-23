@@ -13,6 +13,10 @@ var basenameUsage = `usage: basename [-a] [-s SUFFIX] NAME... | NAME [SUFFIX]
 Return non-directory portion of a pathname removing suffix.
 `
 
+func init() {
+	Bees["basename"] = Basename
+}
+
 func Basename(cmd *Cmd) int {
 	var (
 		names    []string

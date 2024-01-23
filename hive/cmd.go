@@ -18,11 +18,7 @@ type Cmd struct {
 
 type CmdFunc func(*Cmd) int
 
-var Cmds = map[string]CmdFunc{
-	"basename": Basename,
-	"false":    False,
-	"true":     True,
-}
+var Bees = map[string]CmdFunc{}
 
 func Command(argv ...string) *Cmd {
 	c := &Cmd{}
@@ -35,7 +31,7 @@ func Command(argv ...string) *Cmd {
 }
 
 func CmdList() (cmds []string) {
-	for cmd := range Cmds {
+	for cmd := range Bees {
 		cmds = append(cmds, cmd)
 	}
 	sort.Strings(cmds)
@@ -60,7 +56,7 @@ func (c *Cmd) run() int {
 		c.Path = c.Args[0]
 		cmd = filepath.Base(c.Path)
 	}
-	if fn, ok := Cmds[cmd]; ok {
+	if fn, ok := Bees[cmd]; ok {
 		return fn(c)
 	} else if c.Fallback {
 		path, err := exec.LookPath(c.Path)
