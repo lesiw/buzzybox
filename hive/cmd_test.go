@@ -1,15 +1,15 @@
-package gobox_test
+package hive_test
 
 import (
 	"strings"
 	"testing"
 
-	gobox "lesiw.io/gobox/cmds"
+	"lesiw.io/buzzybox/hive"
 )
 
 func run(t *testing.T, argv ...string) string {
 	outw := &strings.Builder{}
-	cmd := gobox.Command(argv...)
+	cmd := hive.Command(argv...)
 	cmd.Stdout = outw
 	if code := cmd.Run(); code != 0 {
 		t.Errorf("code: got %d, want 0", code)
@@ -27,7 +27,7 @@ func runN(t *testing.T, argv ...string) []string {
 
 func fail(t *testing.T, argv ...string) string {
 	errw := &strings.Builder{}
-	cmd := gobox.Command(argv...)
+	cmd := hive.Command(argv...)
 	cmd.Stderr = errw
 	if code := cmd.Run(); code != 1 {
 		t.Errorf("code: got %d, want 1", code)

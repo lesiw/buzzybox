@@ -1,3 +1,3 @@
-module lesiw.io/gobox
+module lesiw.io/buzzybox
 
 go 1.21.0

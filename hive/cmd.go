@@ -1,4 +1,4 @@
-package gobox
+package hive
 
 import (
 	"errors"
@@ -49,10 +49,10 @@ func (c *Cmd) Run() int {
 
 func (c *Cmd) run() int {
 	cmd := filepath.Base(c.Path)
-	if cmd == "gobox" {
+	if cmd == "buzzybox" {
 		if len(c.Args) < 2 {
 			// TODO: word wrap
-			fmt.Fprintf(c.Stderr, "Usage: gobox [command]\nCommands: %s\n",
+			fmt.Fprintf(c.Stderr, "Usage: buzzybox [command]\nCommands: %s\n",
 				strings.Join(CmdList(), ", "))
 			return 1
 		}

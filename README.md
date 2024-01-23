@@ -1,11 +1,12 @@
-# 🥡 gobox: Linux utilities to-go
+# 🐝 buzzybox: Portable shell utilities
 
-`gobox` is a multicall binary like `busybox` that brings basic Linux utility
-support to multiple platforms. It can be run as a standalone program or imported
-as a library.
+`buzzybox` is a multicall binary like `busybox` that brings a subset of shell
+utilities to multiple platforms. It can be run as a standalone program
+(`buzzybox`) or imported as a library (`lesiw.io/buzzybox/hive`).
 
 ## Features
 
+* Memory safe.
 * [No dependencies.](go.mod)
 * [tinygo](https://tinygo.org/) compatible.
 * Friendly license (MIT).
@@ -13,7 +14,7 @@ as a library.
 ## Installation
 
 ``` sh
-go install lesiw.io/gobox@latest
+go install lesiw.io/buzzybox@latest
 ```
 
 ## App criteria for inclusion
@@ -31,8 +32,8 @@ And all of the following:
 
 ## Support matrix
 
-| App        | Linux | Windows | MacOS |
-|:-----------|:------|:--------|:------|
-| `basename` | ✅    | ✅      | ✅    |
-| `false`    | ✅    | ✅      | ✅    |
-| `true`     | ✅    | ✅      | ✅    |
+| App        | Linux | Windows | MacOS | TinyGo |
+|:-----------|:------|:--------|:------|--------|
+| `basename` | ✅    | ✅      | ✅    | ✅     |
+| `false`    | ✅    | ✅      | ✅    | ✅     |
+| `true`     | ✅    | ✅      | ✅    | ✅     |

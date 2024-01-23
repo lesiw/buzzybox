@@ -1,4 +1,4 @@
-package gobox_test
+package hive_test
 
 import (
 	"reflect"
