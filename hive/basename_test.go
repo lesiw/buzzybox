@@ -64,6 +64,9 @@ func TestBasenameSuffixes(t *testing.T) {
 		argv: []string{"basename", "/path/to/file.txt", ".txt"},
 		want: []string{"file"},
 	}, {
+		argv: []string{"basename", "-s.txt", "/path/to/file.txt", "/path/to/file2.txt"},
+		want: []string{"file", "file2"},
+	}, {
 		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt", "/path/to/file2.txt"},
 		want: []string{"file", "file2"},
 	}, {
@@ -89,7 +92,7 @@ func TestBasenameInvalidInput(t *testing.T) {
 		msg:  "too many arguments",
 	}, {
 		argv: []string{"basename", "-s"},
-		msg:  "flag needs an argument: -s",
+		msg:  "bad flag: need value: -s",
 	}, {
 		argv: []string{"basename", "-s", ".txt"},
 		msg:  "needs 1 argument",
