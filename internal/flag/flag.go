@@ -88,6 +88,7 @@ func (f *FlagSet) Parse(args ...string) error {
 	f.args = args
 	for len(f.args) > 0 {
 		if f.args[0] == "--" {
+			f.args = f.args[1:]
 			f.Args = append(f.Args, f.args...)
 			return nil
 		} else if f.args[0] == "-" {

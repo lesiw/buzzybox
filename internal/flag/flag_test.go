@@ -80,5 +80,10 @@ func TestFlag(t *testing.T) {
 		if s != tt.want.s {
 			t.Errorf("s: got %v, want %v", s, tt.want.s)
 		}
+		for i := range tt.want.a {
+			if tt.want.a[i] != fs.Arg(i) {
+				t.Errorf("a[%d]: got %v, want %v", i, fs.Arg(i), tt.want.a[i])
+			}
+		}
 	}
 }
