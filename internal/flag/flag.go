@@ -109,31 +109,37 @@ func (f *FlagSet) Parse(args ...string) error {
 func (f *FlagSet) parseFlag() error {
 	arg := f.args[0]
 	f.args = f.args[1:]
-	if len(arg) > 2 && arg[:2] == "--" {
-		name, val, _ := strings.Cut(arg[2:], "=")
-		if len(name) == 1 {
-			return fmt.Errorf("bad flag: --%s", name) // Short flag invalid.
-		}
-		flag, ok := f.flags[name]
-		if !ok {
-			return fmt.Errorf("bad flag: --%s", name)
-		}
-		_, bool := flag.Value.(*boolValue)
-		if val == "" && len(f.args) > 0 && !bool {
-			val = f.args[0]
-			f.args = f.args[1:]
-		} else if val == "" && bool {
-			val = "true"
-		} else if val == "" && !bool {
-			return fmt.Errorf("bad flag: needs value: --%s", flag.Name)
-		}
-		flag.Value.Set(val)
-		return nil
-	}
 	if arg[0] != '-' {
 		return fmt.Errorf("bad flag: %s", arg)
+	} else if len(arg) > 2 && arg[:2] == "--" {
+		return f.parseLongFlag(arg[2:])
+	} else {
+		return f.parseShortFlag(arg[1:])
 	}
-	arg = arg[1:]
+}
+
+func (f *FlagSet) parseLongFlag(arg string) error {
+	name, val, _ := strings.Cut(arg, "=")
+	if len(name) == 1 {
+		return fmt.Errorf("bad flag: --%s", name) // Short flags are invalid.
+	}
+	flag, ok := f.flags[name]
+	if !ok {
+		return fmt.Errorf("bad flag: --%s", name)
+	}
+	_, bool := flag.Value.(*boolValue)
+	if val == "" && len(f.args) > 0 && !bool {
+		val = f.args[0]
+		f.args = f.args[1:]
+	} else if val == "" && bool {
+		val = "true"
+	} else if val == "" && !bool {
+		return fmt.Errorf("bad flag: needs value: --%s", flag.Name)
+	}
+	return flag.Value.Set(val)
+}
+
+func (f *FlagSet) parseShortFlag(arg string) error {
 	for len(arg) > 0 {
 		name := arg[0]
 		arg = arg[1:]
@@ -141,14 +147,15 @@ func (f *FlagSet) parseFlag() error {
 		if !ok {
 			return fmt.Errorf("bad flag: -%s", string(name))
 		} else if _, bool := flag.Value.(*boolValue); bool {
-			flag.Value.Set("true")
+			if err := flag.Value.Set("true"); err != nil {
+				return err
+			}
 		} else if len(arg) > 0 {
-			flag.Value.Set(arg)
-			break
+			return flag.Value.Set(arg)
 		} else if len(f.args) > 0 {
-			flag.Value.Set(f.args[0])
+			arg = f.args[0]
 			f.args = f.args[1:]
-			break
+			return flag.Value.Set(arg)
 		} else {
 			return fmt.Errorf("bad flag: need value: -%s", flag.Name)
 		}
