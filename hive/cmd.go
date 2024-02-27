@@ -49,6 +49,13 @@ func CmdList() (cmds []string) {
 	return
 }
 
+func (c *Cmd) Default() int {
+	// TODO: word wrap
+	fmt.Fprintf(c.Stderr, "Usage: buzzybox [command]\nCommands: %s\n",
+		strings.Join(CmdList(), ", "))
+	return 1
+}
+
 func (c *Cmd) Run() int {
 	c.Start()
 	if err := c.Wait(); err != nil {
@@ -61,10 +68,7 @@ func (c *Cmd) Start() {
 	cmd := filepath.Base(c.Path)
 	if cmd == "buzzybox" {
 		if len(c.Args) < 2 {
-			// TODO: word wrap
-			fmt.Fprintf(c.Stderr, "Usage: buzzybox [command]\nCommands: %s\n",
-				strings.Join(CmdList(), ", "))
-			go func() { c.code <- 1 }()
+			go func() { c.code <- c.Default() }()
 			return
 		}
 		c.Args = c.Args[1:]
