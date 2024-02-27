@@ -52,6 +52,12 @@ func main() {
 
 [▶️ Run this example on the Go Playground](https://go.dev/play/p/NI5W18yuX8A)
 
+### Docker
+
+```sh
+echo "hello embedded world" | docker run -i lesiw/buzzybox awk '{ print $1, $3 }'
+```
+
 ## App criteria for inclusion
 
 One of the following:
