@@ -17,6 +17,41 @@ utilities to multiple platforms. It can be run as a standalone program
 go install lesiw.io/buzzybox@latest
 ```
 
+## Usage
+
+### Subcommand
+
+```sh
+echo "hello embedded world" | buzzybox awk '{ print $1, $3 }'
+```
+
+### Symlink
+
+```sh
+ln -s "$(which buzzybox)" awk
+echo "hello embedded world" | ./awk '{ print $1, $3 }'
+```
+
+### Library
+
+```go
+package main
+
+import (
+	"strings"
+
+	"lesiw.io/buzzybox/hive"
+)
+
+func main() {
+	cmd := hive.Command("awk", "{ print $1, $3 }")
+	cmd.Stdin = strings.NewReader("hello embedded world")
+	cmd.Run()
+}
+```
+
+[▶️ Run this example on the Go Playground](https://go.dev/play/p/NI5W18yuX8A)
+
 ## App criteria for inclusion
 
 One of the following:
