@@ -64,7 +64,7 @@ func (c *Cmd) Start() {
 			// TODO: word wrap
 			fmt.Fprintf(c.Stderr, "Usage: buzzybox [command]\nCommands: %s\n",
 				strings.Join(CmdList(), ", "))
-			c.ExitCode = 1
+			go func() { c.code <- 1 }()
 			return
 		}
 		c.Args = c.Args[1:]
