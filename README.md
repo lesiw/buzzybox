@@ -75,6 +75,7 @@ And all of the following:
 
 | App        | Linux | Windows | MacOS | TinyGo |
 |:-----------|:------|:--------|:------|--------|
+| `arch`     | ✅    | ✅      | ✅    | ✅     |
 | `awk`      | ✅    | ✅      | ✅    | ✅     |
 | `basename` | ✅    | ✅      | ✅    | ✅     |
 | `false`    | ✅    | ✅      | ✅    | ✅     |
