@@ -6,10 +6,10 @@ utilities to multiple platforms. It can be run as a standalone program
 
 ## Features
 
-* Memory safe.
-* [No dependencies.](go.mod)
-* [tinygo](https://tinygo.org/) compatible.
-* Friendly license (MIT).
+* Written in a [memory safe language](https://media.defense.gov/2023/Dec/06/2003352724/-1/-1/0/THE-CASE-FOR-MEMORY-SAFE-ROADMAPS-TLP-CLEAR.PDF#page=19).
+* Uses only [Go Project](https://go.dev/project) [dependencies](go.mod).
+* Compatible with [tinygo](https://tinygo.org/).
+* Open-sourced under a [permissive license](LICENSE).
 
 ## Installation
 
