@@ -56,6 +56,11 @@ func (c *Cmd) Default() int {
 	return 1
 }
 
+func (c *Cmd) BadCmd() int {
+	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
+	return 1
+}
+
 func (c *Cmd) Run() int {
 	c.Start()
 	if err := c.Wait(); err != nil {
@@ -90,8 +95,7 @@ func (c *Cmd) Start() {
 		return
 	}
 badcmd:
-	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
-	c.ExitCode = 1
+	go func() { c.code <- c.BadCmd() }()
 }
 
 func (c *Cmd) Wait() error {
