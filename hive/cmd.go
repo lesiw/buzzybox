@@ -66,7 +66,7 @@ func (c *Cmd) Run() int {
 
 func (c *Cmd) Start() {
 	cmd := filepath.Base(c.Path)
-	if cmd == "buzzybox" {
+	if name, _, _ := strings.Cut(cmd, "."); name == "buzzybox" {
 		if len(c.Args) < 2 {
 			go func() { c.code <- c.Default() }()
 			return
