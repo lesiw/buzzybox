@@ -54,6 +54,7 @@ type FlagSet struct {
 	name   string
 	flags  map[string]*Flag
 	Args   []string
+	Usage  string
 }
 
 func NewFlagSet(output io.Writer, name string) *FlagSet {
@@ -84,26 +85,32 @@ func (f *FlagSet) StringVar(p *string, name string, usage string) {
 	f.Var(newStringValue(p), name, usage)
 }
 
-func (f *FlagSet) Parse(args ...string) error {
+func (f *FlagSet) Parse(args ...string) (err error) {
+	defer func() {
+		if err != nil {
+			fmt.Fprintln(f.output, err)
+			f.PrintUsage()
+		}
+	}()
 	f.args = args
 	for len(f.args) > 0 {
 		if f.args[0] == "--" {
 			f.args = f.args[1:]
 			f.Args = append(f.Args, f.args...)
-			return nil
+			return
 		} else if f.args[0] == "-" {
 			f.Args = append(f.Args, "-")
 			f.args = f.args[1:]
 		} else if f.args[0][0] == '-' {
-			if err := f.parseFlag(); err != nil {
-				return err
+			if err = f.parseFlag(); err != nil {
+				return
 			}
 		} else {
 			f.Args = append(f.Args, f.args[0])
 			f.args = f.args[1:]
 		}
 	}
-	return nil
+	return
 }
 
 func (f *FlagSet) parseFlag() error {
@@ -161,6 +168,17 @@ func (f *FlagSet) parseShortFlag(arg string) error {
 		}
 	}
 	return nil
+}
+
+func (f *FlagSet) PrintError(s string) {
+	fmt.Fprintln(f.output, s)
+	f.PrintUsage()
+}
+
+func (f *FlagSet) PrintUsage() {
+	fmt.Fprintln(f.output, f.Usage)
+	fmt.Fprintln(f.output)
+	f.PrintDefaults()
 }
 
 func (f *FlagSet) PrintDefaults() {

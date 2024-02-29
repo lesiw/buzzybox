@@ -1,7 +1,6 @@
 package hive
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -9,10 +8,9 @@ import (
 	"lesiw.io/buzzybox/internal/flag"
 )
 
-var basenameUsage = `usage: basename [-a] [-s SUFFIX] NAME... | NAME [SUFFIX]
+const basenameUsage = `usage: basename [-a] [-s SUFFIX] NAME... | NAME [SUFFIX]
 
-Return non-directory portion of a pathname removing suffix.
-`
+Return non-directory portion of a pathname removing suffix.`
 
 func init() {
 	Bees["basename"] = Basename
@@ -25,13 +23,11 @@ func Basename(cmd *Cmd) int {
 		allNames = flags.Bool("a", "All arguments are names")
 		suffix   = flags.String("s", "Remove `suffix` (implies -a)")
 	)
+	flags.Usage = basenameUsage
 	if err := flags.Parse(cmd.Args[1:]...); err != nil || len(flags.Args) == 0 {
 		if err == nil {
-			err = errors.New("error: needs 1 argument")
+			flags.PrintError("error: needs 1 argument")
 		}
-		fmt.Fprintln(cmd.Stderr, err)
-		fmt.Fprintln(cmd.Stderr, basenameUsage)
-		flags.PrintDefaults()
 		return 1
 	}
 	if *allNames || *suffix != "" {

@@ -17,10 +17,9 @@ import (
 	"lesiw.io/buzzybox/internal/posix"
 )
 
-var awkUsage = `usage: awk [-v VAR=VAL...] [-F SEP] [-f PROGRAM_FILE | PROGRAM] [FILE...]
+const awkUsage = `usage: awk [-v VAR=VAL...] [-F SEP] [-f PROGRAM_FILE | PROGRAM] [FILE...]
 
-A pattern scanning and processing language.
-`
+A pattern scanning and processing language.`
 
 func init() {
 	Bees["awk"] = Awk
@@ -37,10 +36,8 @@ func Awk(cmd *Cmd) (code int) {
 	)
 	flags.Var(progfiles, "f", "Path to awk program")
 	flags.Var(vars, "v", "Set variable")
+	flags.Usage = awkUsage
 	if err = flags.Parse(cmd.Args[1:]...); err != nil {
-		fmt.Fprintln(cmd.Stderr, err)
-		fmt.Fprintln(cmd.Stderr, awkUsage)
-		flags.PrintDefaults()
 		return 1
 	}
 	p := newawkp(cmd)
