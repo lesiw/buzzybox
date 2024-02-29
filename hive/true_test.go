@@ -13,7 +13,7 @@ func TestTrue(t *testing.T) {
 }
 
 func TestTrueSwallowsArgv(t *testing.T) {
-	if got := hive.Command("true", "-h").Run(); got != 0 {
+	if got := hive.Command("true", "--help").Run(); got != 0 {
 		t.Errorf("true returned %d, want 0", got)
 	}
 }
