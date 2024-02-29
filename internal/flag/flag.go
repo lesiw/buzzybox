@@ -10,6 +10,7 @@ import (
 )
 
 var errParse = errors.New("parse error")
+var errHelp = errors.New("help requested")
 
 type Value interface {
 	String() string
@@ -87,10 +88,12 @@ func (f *FlagSet) StringVar(p *string, name string, usage string) {
 
 func (f *FlagSet) Parse(args ...string) (err error) {
 	defer func() {
-		if err != nil {
+		if err == nil {
+			return
+		} else if err != errHelp {
 			fmt.Fprintln(f.output, err)
-			f.PrintUsage()
 		}
+		f.PrintUsage()
 	}()
 	f.args = args
 	for len(f.args) > 0 {
@@ -129,6 +132,9 @@ func (f *FlagSet) parseLongFlag(arg string) error {
 	name, val, _ := strings.Cut(arg, "=")
 	if len(name) == 1 {
 		return fmt.Errorf("bad flag: --%s", name) // Short flags are invalid.
+	}
+	if name == "help" {
+		return errHelp
 	}
 	flag, ok := f.flags[name]
 	if !ok {
@@ -177,13 +183,16 @@ func (f *FlagSet) PrintError(s string) {
 
 func (f *FlagSet) PrintUsage() {
 	fmt.Fprintln(f.output, f.Usage)
-	fmt.Fprintln(f.output)
-	f.PrintDefaults()
+	defaults := f.Defaults()
+	if defaults != "" {
+		fmt.Fprintln(f.output)
+		fmt.Fprintln(f.output, defaults)
+	}
 }
 
-func (f *FlagSet) PrintDefaults() {
+func (f *FlagSet) Defaults() string {
+	var b strings.Builder
 	f.Visit(func(flag *Flag) {
-		var b strings.Builder
 		fmt.Fprintf(&b, "  -%s", flag.Name)
 		name, usage := UnquoteUsage(flag)
 		if len(name) > 0 {
@@ -195,8 +204,9 @@ func (f *FlagSet) PrintDefaults() {
 			b.WriteString("\n    \t")
 		}
 		b.WriteString(strings.ReplaceAll(usage, "\n", "\n    \t"))
-		fmt.Fprint(f.output, b.String(), "\n")
+		b.WriteString("\n")
 	})
+	return strings.TrimSuffix(b.String(), "\n")
 }
 
 func (f *FlagSet) Visit(fn func(*Flag)) {

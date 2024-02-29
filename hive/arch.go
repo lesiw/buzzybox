@@ -17,7 +17,7 @@ func init() {
 func Arch(cmd *Cmd) int {
 	flags := flag.NewFlagSet(cmd.Stderr, "arch")
 	flags.Usage = archUsage
-	if err := flags.Parse(cmd.Args[:1]...); err != nil {
+	if err := flags.Parse(cmd.Args[1:]...); err != nil {
 		return 1
 	}
 	fmt.Fprintln(cmd.Stdout, arch())

@@ -74,9 +74,8 @@ func Awk(cmd *Cmd) (code int) {
 		p.sym(varval[0]).SetString(val)
 	}
 	if prog == "" {
-		fmt.Fprintln(cmd.Stderr, awkUsage)
-		flags.PrintDefaults()
-		return 0
+		flags.PrintUsage()
+		return 1
 	}
 	if p.tokens, err = p.lexer.lex(prog); err != nil {
 		prettyPrintError(cmd.Stderr, err)
