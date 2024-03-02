@@ -67,7 +67,8 @@ func TestBasenameSuffixes(t *testing.T) {
 		argv: []string{"basename", "-s.txt", "/path/to/file.txt", "/path/to/file2.txt"},
 		want: []string{"file", "file2"},
 	}, {
-		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt", "/path/to/file2.txt"},
+		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt",
+			"/path/to/file2.txt"},
 		want: []string{"file", "file2"},
 	}, {
 		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt", "/path/to/file2.txt",
