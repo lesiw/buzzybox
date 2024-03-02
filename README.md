@@ -79,5 +79,6 @@ And all of the following:
 | `awk`      | ✅    | ✅      | ✅    | ✅     |
 | `base64`   | ✅    | ✅      | ✅    | ✅     |
 | `basename` | ✅    | ✅      | ✅    | ✅     |
+| `cat`      | ✅    | ✅      | ✅    | ✅     |
 | `false`    | ✅    | ✅      | ✅    | ✅     |
 | `true`     | ✅    | ✅      | ✅    | ✅     |

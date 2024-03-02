@@ -1,7 +1,9 @@
 package hive_test
 
 import (
+	"io"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -33,4 +35,29 @@ func tmpfile(t *testing.T, contents string) string {
 		t.Fatal(err)
 	}
 	return tmpfile.Name()
+}
+
+type multiStringReader struct {
+	current io.Reader
+	strings []string
+	offset  int
+}
+
+func newMultiStringReader(s []string) *multiStringReader {
+	return &multiStringReader{strings: s}
+}
+
+func (r *multiStringReader) Read(p []byte) (n int, err error) {
+	if r.current == nil {
+		if r.offset >= len(r.strings) {
+			return 0, io.EOF
+		}
+		r.current = strings.NewReader(r.strings[r.offset])
+		r.offset++
+	}
+	n, err = r.current.Read(p)
+	if err == io.EOF {
+		r.current = nil
+	}
+	return
 }
