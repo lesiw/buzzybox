@@ -43,10 +43,32 @@ func (s *stringValue) Set(val string) error { *s = stringValue(val); return nil 
 func (s *stringValue) Get() string          { return string(*s) }
 func (s *stringValue) String() string       { return string(*s) }
 
+type intValue int
+
+func newIntValue(p *int) *intValue {
+	return (*intValue)(p)
+}
+func (i *intValue) Set(s string) error {
+	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
+	if err != nil {
+		err = errParse
+	}
+	*i = intValue(v)
+	return err
+}
+func (i *intValue) Get() int       { return int(*i) }
+func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
+
 type Flag struct {
 	Name  string
 	Usage string
 	Value Value
+	isSet bool
+}
+
+func (f *Flag) set(s string) error {
+	f.isSet = true
+	return f.Value.Set(s)
 }
 
 type FlagSet struct {
@@ -63,7 +85,7 @@ func NewFlagSet(output io.Writer, name string) *FlagSet {
 }
 
 func (f *FlagSet) Var(value Value, name string, usage string) {
-	f.flags[name] = &Flag{name, usage, value}
+	f.flags[name] = &Flag{name, usage, value, false}
 }
 
 func (f *FlagSet) Bool(name string, usage string) *bool {
@@ -84,6 +106,16 @@ func (f *FlagSet) String(name string, usage string) *string {
 
 func (f *FlagSet) StringVar(p *string, name string, usage string) {
 	f.Var(newStringValue(p), name, usage)
+}
+
+func (f *FlagSet) Int(name string, usage string) *int {
+	var i int
+	f.IntVar(&i, name, usage)
+	return &i
+}
+
+func (f *FlagSet) IntVar(p *int, name string, usage string) {
+	f.Var(newIntValue(p), name, usage)
 }
 
 func (f *FlagSet) Parse(args ...string) (err error) {
@@ -114,6 +146,13 @@ func (f *FlagSet) Parse(args ...string) (err error) {
 		}
 	}
 	return
+}
+
+func (f *FlagSet) Set(s string) bool {
+	if f.flags[s] != nil {
+		return f.flags[s].isSet
+	}
+	return false
 }
 
 func (f *FlagSet) parseFlag() error {
@@ -149,7 +188,7 @@ func (f *FlagSet) parseLongFlag(arg string) error {
 	} else if val == "" && !bool {
 		return fmt.Errorf("bad flag: needs value: --%s", flag.Name)
 	}
-	return flag.Value.Set(val)
+	return flag.set(val)
 }
 
 func (f *FlagSet) parseShortFlag(arg string) error {
@@ -160,15 +199,15 @@ func (f *FlagSet) parseShortFlag(arg string) error {
 		if !ok {
 			return fmt.Errorf("bad flag: -%s", string(name))
 		} else if _, bool := flag.Value.(*boolValue); bool {
-			if err := flag.Value.Set("true"); err != nil {
+			if err := flag.set("true"); err != nil {
 				return err
 			}
 		} else if len(arg) > 0 {
-			return flag.Value.Set(arg)
+			return flag.set(arg)
 		} else if len(f.args) > 0 {
 			arg = f.args[0]
 			f.args = f.args[1:]
-			return flag.Value.Set(arg)
+			return flag.set(arg)
 		} else {
 			return fmt.Errorf("bad flag: need value: -%s", flag.Name)
 		}
@@ -251,6 +290,8 @@ func UnquoteUsage(flag *Flag) (name string, usage string) {
 	switch flag.Value.(type) {
 	case *boolValue:
 		name = ""
+	case *intValue:
+		name = "num"
 	case *stringValue:
 		name = "string"
 	}
