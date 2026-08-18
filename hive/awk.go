@@ -2231,10 +2231,10 @@ func (p *awkp) sprintfv(result *strings.Builder, verb string, val *awkcell) erro
 	case 'd', 'i':
 		result.WriteString(fmt.Sprintf(verb, int(val.Num())))
 	case 'o', 'x', 'X':
-		result.WriteString(fmt.Sprintf(verb, uint(val.Num())))
+		result.WriteString(fmt.Sprintf(verb, uint64(int64(val.Num()))))
 	case 'u':
 		verbsl[len(verbsl)-1] = 'd'
-		result.WriteString(fmt.Sprintf(string(verbsl), uint(val.Num())))
+		result.WriteString(fmt.Sprintf(string(verbsl), uint64(int64(val.Num()))))
 	case 'g', 'G':
 		if verb == "%g" {
 			verb = "%.6g"
