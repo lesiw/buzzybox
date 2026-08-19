@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"lesiw.io/buzzybox/hive"
@@ -61,15 +60,15 @@ func TestCat(t *testing.T) {
 		want:  "one\ntwo\n",
 	}}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testCat(t, tt)
-		})
+		t.Run(tt.name, func(t *testing.T) { testCat(t, tt) })
 	}
 }
 
 func testCat(t *testing.T, tt catTest) {
-	stdin := newMultiStringReader(tt.stdin)
-	stdout := &strings.Builder{}
+	var (
+		stdin  = newMultiStringReader(tt.stdin)
+		stdout = new(syncBuffer)
+	)
 	if len(tt.files) > 0 {
 		dir := t.TempDir()
 		for i, f := range tt.files {
@@ -78,9 +77,7 @@ func testCat(t *testing.T, tt catTest) {
 				t.Fatal(err)
 			}
 		}
-		if err := os.Chdir(dir); err != nil {
-			t.Fatal(err)
-		}
+		t.Chdir(dir)
 	}
 	args := append([]string{"cat"}, tt.args...)
 	cmd := hive.Command(args...)

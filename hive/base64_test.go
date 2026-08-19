@@ -25,7 +25,8 @@ func TestBase64(t *testing.T) {
 		out: "aGVsbG8gd29ybGQ\ngd3JhcHBlZAo=\n",
 	}, {
 		in: "much longer input to test wrapping at 76 columns by default\n",
-		out: `bXVjaCBsb25nZXIgaW5wdXQgdG8gdGVzdCB3cmFwcGluZyBhdCA3NiBjb2x1bW5zIGJ5IGRlZmF1
+		out: `bXVjaCBsb25nZXIgaW5wdXQgdG8gdGVzdCB3cmFwcGluZyBhdCA3NiBjb2x1bW` +
+			`5zIGJ5IGRlZmF1
 bHQK
 `,
 	}, {
@@ -57,9 +58,11 @@ bHQK
 }
 
 func testBase64Stdin(t *testing.T, tt base64Test) {
-	in := strings.NewReader(tt.in)
-	out := &strings.Builder{}
-	args := []string{"base64"}
+	var (
+		in   = strings.NewReader(tt.in)
+		out  = new(syncBuffer)
+		args = []string{"base64"}
+	)
 	if tt.d {
 		args = append(args, "-d")
 	}
@@ -78,9 +81,11 @@ func testBase64Stdin(t *testing.T, tt base64Test) {
 }
 
 func testBase64File(t *testing.T, tt base64Test) {
-	tmpfile := tmpfile(t, tt.in)
-	out := &strings.Builder{}
-	args := []string{"base64", tmpfile}
+	var (
+		tmpfile = tmpfile(t, tt.in)
+		out     = new(syncBuffer)
+		args    = []string{"base64", tmpfile}
+	)
 	if tt.d {
 		args = append(args, "-d")
 	}

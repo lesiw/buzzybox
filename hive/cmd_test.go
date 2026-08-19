@@ -8,8 +8,10 @@ import (
 )
 
 func run(t *testing.T, argv ...string) string {
-	outw := &strings.Builder{}
-	cmd := hive.Command(argv...)
+	var (
+		outw = new(syncBuffer)
+		cmd  = hive.Command(argv...)
+	)
 	cmd.Stdout = outw
 	if code := cmd.Run(); code != 0 {
 		t.Errorf("code: got %d, want 0", code)
@@ -26,8 +28,10 @@ func runN(t *testing.T, argv ...string) []string {
 }
 
 func fail(t *testing.T, argv ...string) string {
-	errw := &strings.Builder{}
-	cmd := hive.Command(argv...)
+	var (
+		errw = new(syncBuffer)
+		cmd  = hive.Command(argv...)
+	)
 	cmd.Stderr = errw
 	if code := cmd.Run(); code != 1 {
 		t.Errorf("code: got %d, want 1", code)
