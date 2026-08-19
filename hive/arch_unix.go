@@ -1,5 +1,4 @@
-//go:build !windows && !tinygo
-// +build !windows,!tinygo
+//go:build unix && !tinygo
 
 package hive
 
