@@ -1,5 +1,4 @@
 //go:build windows
-// +build windows
 
 package hive
 
@@ -13,7 +12,9 @@ var (
 	procGetSystemInfo = modkernel32.NewProc("GetSystemInfo")
 )
 
-// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info
+// systeminfo mirrors the SYSTEM_INFO struct.
+// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-
+// sysinfoapi-system_info
 type systeminfo struct {
 	wProcessorArchitecture      uint16
 	wReserved                   uint16
@@ -28,7 +29,9 @@ type systeminfo struct {
 	wProcessorRevision          uint16
 }
 
-// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info
+// Processor architecture constants from SYSTEM_INFO.
+// https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-
+// sysinfoapi-system_info
 const (
 	PROCESSOR_ARCHITECTURE_AMD64 = 9
 	PROCESSOR_ARCHITECTURE_INTEL = 0
@@ -42,7 +45,9 @@ var sysinfocache *systeminfo
 func sysinfo() *systeminfo {
 	if sysinfocache == nil {
 		sysinfocache = new(systeminfo)
-		syscall.SyscallN(procGetSystemInfo.Addr(), uintptr(unsafe.Pointer(sysinfocache)))
+		_, _, _ = syscall.SyscallN(
+			procGetSystemInfo.Addr(), uintptr(unsafe.Pointer(sysinfocache)),
+		)
 	}
 	return sysinfocache
 }

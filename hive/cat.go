@@ -2,7 +2,6 @@ package hive
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os"
 
@@ -19,9 +18,11 @@ func init() {
 }
 
 func Cat(cmd *Cmd) int {
-	var err error
-	flags := flag.NewFlagSet(cmd.Stderr, "cat")
-	unbuf := flags.Bool("u", "Disable output buffering.")
+	var (
+		err   error
+		flags = flag.NewFlagSet(cmd.Stderr, "cat")
+		unbuf = flags.Bool("u", "Disable output buffering.")
+	)
 	flags.Usage = catUsage
 	if err := flags.Parse(cmd.Args[1:]...); err != nil {
 		return 1
@@ -43,24 +44,27 @@ func Cat(cmd *Cmd) int {
 		} else {
 			file, err = os.Open(f)
 			if err != nil {
-				fmt.Fprintf(cmd.Stderr, "bad file: %v\n", err)
+				cmd.Errorf("bad file: %v\n", err)
 				return 1
 			}
 			r = file
 		}
 		if _, err := io.Copy(w, r); err != nil {
-			fmt.Fprintf(cmd.Stderr, "bad file: %v\n", err)
+			cmd.Errorf("bad file: %v\n", err)
 			return 1
 		}
 		if file != nil {
 			if err := file.Close(); err != nil {
-				fmt.Fprintf(cmd.Stderr, "bad file: %v\n", err)
+				cmd.Errorf("bad file: %v\n", err)
 				return 1
 			}
 		}
 	}
 	if *unbuf {
-		w.(*bufio.Writer).Flush()
+		if err := w.(*bufio.Writer).Flush(); err != nil {
+			cmd.Errorf("bad file: %v\n", err)
+			return 1
+		}
 	}
 	return 0
 }

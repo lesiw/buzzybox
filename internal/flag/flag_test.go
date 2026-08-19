@@ -71,10 +71,12 @@ func TestFlag(t *testing.T) {
 	}}
 	for _, tt := range tests {
 		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
-			fs := flag.NewFlagSet(new(strings.Builder), "test")
-			var s string
-			var n int
-			var x, y, z bool
+			var (
+				fs      = flag.NewFlagSet(new(strings.Builder), "test")
+				s       string
+				n       int
+				x, y, z bool
+			)
 			fs.StringVar(&s, "s", "")
 			fs.IntVar(&n, "n", "")
 			fs.BoolVar(&x, "x", "")
@@ -101,7 +103,8 @@ func TestFlag(t *testing.T) {
 			for i := range tt.want.a {
 				if tt.want.a[i] != fs.Arg(i) {
 					t.Errorf("a[%d]: got %v, want %v",
-						i, fs.Arg(i), tt.want.a[i])
+						i, fs.Arg(i), tt.want.a[i],
+					)
 				}
 			}
 		})

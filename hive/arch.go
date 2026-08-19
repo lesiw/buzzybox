@@ -1,10 +1,6 @@
 package hive
 
-import (
-	"fmt"
-
-	"lesiw.io/buzzybox/internal/flag"
-)
+import "lesiw.io/buzzybox/internal/flag"
 
 const archUsage = `usage: arch
 
@@ -20,6 +16,6 @@ func Arch(cmd *Cmd) int {
 	if err := flags.Parse(cmd.Args[1:]...); err != nil {
 		return 1
 	}
-	fmt.Fprintln(cmd.Stdout, arch())
+	cmd.Println(arch())
 	return 0
 }

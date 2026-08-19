@@ -1,0 +1,81 @@
+name: check
+on:
+  push:
+    branches: [main, next]
+  pull_request:
+  workflow_dispatch:
+env:
+  GOTOOLCHAIN: local
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - shell: bash
+        run: |
+          files=$(go run lesiw.io/gorc/gofmt@latest -l .)
+          echo "$files"
+          test -z "$files"
+  test:
+    needs: fmt
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - run: go run lesiw.io/gorc/go@latest test ./...
+  alpine:
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: go
+        run: |
+          version=$(curl -s 'https://go.dev/VERSION?m=text' | head -1)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - run: |
+          docker run --rm -v "$PWD:/work" -w /work alpine:latest sh -c '
+            apk add --no-cache curl tar gcc musl-dev
+            curl -L "https://go.dev/dl/${{ steps.go.outputs.version }}.linux-amd64.tar.gz" | tar -C /usr/local -xz
+            export PATH=/usr/local/go/bin:$PATH
+            go run lesiw.io/gorc/go@latest test ./...
+          '
+  freebsd:
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - id: go
+        run: |
+          version=$(curl -s 'https://go.dev/VERSION?m=text' | head -1)
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - uses: vmactions/freebsd-vm@v1
+        with:
+          run: |
+            pkg install -y curl
+            curl -L "https://go.dev/dl/${{ steps.go.outputs.version }}.freebsd-amd64.tar.gz" | tar -C /usr/local -xz
+            export PATH=/usr/local/go/bin:$PATH
+            go run lesiw.io/gorc/go@latest test ./...
+  cross:
+    needs: fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - shell: bash
+        run: |
+          for target in linux/386 linux/arm linux/arm64 darwin/amd64 \
+              windows/386 plan9/386 plan9/arm plan9/amd64; do
+            CGO_ENABLED=0 GOOS="${target%/*}" GOARCH="${target#*/}" \
+              go build -o /dev/null ./...
+          done

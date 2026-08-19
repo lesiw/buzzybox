@@ -1,11 +1,8 @@
 //go:build windows && !tinygo
-// +build windows,!tinygo
 
 package hive
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func arch() string {
 	info := sysinfo()

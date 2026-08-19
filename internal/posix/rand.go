@@ -1,8 +1,9 @@
 package posix
 
-var rngidx int
-var rngvec [32]int
-var rngseed int
+var (
+	rngidx, rngseed int
+	rngvec          [32]int
+)
 
 func Srandom(seed int) {
 	rngseed = seed

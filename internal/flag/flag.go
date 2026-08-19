@@ -1,7 +1,6 @@
 package flag
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -9,8 +8,10 @@ import (
 	"strings"
 )
 
-var errParse = errors.New("parse error")
-var errHelp = errors.New("help requested")
+var (
+	errParse = fmt.Errorf("parse error")
+	errHelp  = fmt.Errorf("help requested")
+)
 
 type Value interface {
 	String() string
@@ -22,6 +23,7 @@ type boolValue bool
 func newBoolValue(p *bool) *boolValue {
 	return (*boolValue)(p)
 }
+
 func (b *boolValue) Set(s string) error {
 	v, err := strconv.ParseBool(s)
 	if err != nil {
@@ -30,6 +32,7 @@ func (b *boolValue) Set(s string) error {
 	*b = boolValue(v)
 	return err
 }
+
 func (b *boolValue) Get() bool        { return bool(*b) }
 func (b *boolValue) String() string   { return strconv.FormatBool(bool(*b)) }
 func (b *boolValue) IsBoolFlag() bool { return true }
@@ -39,15 +42,21 @@ type stringValue string
 func newStringValue(p *string) *stringValue {
 	return (*stringValue)(p)
 }
-func (s *stringValue) Set(val string) error { *s = stringValue(val); return nil }
-func (s *stringValue) Get() string          { return string(*s) }
-func (s *stringValue) String() string       { return string(*s) }
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+
+func (s *stringValue) Get() string    { return string(*s) }
+func (s *stringValue) String() string { return string(*s) }
 
 type intValue int
 
 func newIntValue(p *int) *intValue {
 	return (*intValue)(p)
 }
+
 func (i *intValue) Set(s string) error {
 	v, err := strconv.ParseInt(s, 0, strconv.IntSize)
 	if err != nil {
@@ -56,6 +65,7 @@ func (i *intValue) Set(s string) error {
 	*i = intValue(v)
 	return err
 }
+
 func (i *intValue) Get() int       { return int(*i) }
 func (i *intValue) String() string { return strconv.Itoa(int(*i)) }
 
@@ -84,37 +94,41 @@ func NewFlagSet(output io.Writer, name string) *FlagSet {
 	return &FlagSet{output: output, name: name, flags: make(map[string]*Flag)}
 }
 
-func (f *FlagSet) Var(value Value, name string, usage string) {
+func (f *FlagSet) print(args ...any) {
+	_, _ = fmt.Fprintln(f.output, args...)
+}
+
+func (f *FlagSet) Var(value Value, name, usage string) {
 	f.flags[name] = &Flag{name, usage, value, false}
 }
 
-func (f *FlagSet) Bool(name string, usage string) *bool {
+func (f *FlagSet) Bool(name, usage string) *bool {
 	var b bool
 	f.BoolVar(&b, name, usage)
 	return &b
 }
 
-func (f *FlagSet) BoolVar(p *bool, name string, usage string) {
+func (f *FlagSet) BoolVar(p *bool, name, usage string) {
 	f.Var(newBoolValue(p), name, usage)
 }
 
-func (f *FlagSet) String(name string, usage string) *string {
+func (f *FlagSet) String(name, usage string) *string {
 	var s string
 	f.StringVar(&s, name, usage)
 	return &s
 }
 
-func (f *FlagSet) StringVar(p *string, name string, usage string) {
+func (f *FlagSet) StringVar(p *string, name, usage string) {
 	f.Var(newStringValue(p), name, usage)
 }
 
-func (f *FlagSet) Int(name string, usage string) *int {
+func (f *FlagSet) Int(name, usage string) *int {
 	var i int
 	f.IntVar(&i, name, usage)
 	return &i
 }
 
-func (f *FlagSet) IntVar(p *int, name string, usage string) {
+func (f *FlagSet) IntVar(p *int, name, usage string) {
 	f.Var(newIntValue(p), name, usage)
 }
 
@@ -123,7 +137,7 @@ func (f *FlagSet) Parse(args ...string) (err error) {
 		if err == nil {
 			return
 		} else if err != errHelp {
-			fmt.Fprintln(f.output, err)
+			f.print(err)
 		}
 		f.PrintUsage()
 	}()
@@ -216,16 +230,16 @@ func (f *FlagSet) parseShortFlag(arg string) error {
 }
 
 func (f *FlagSet) PrintError(s string) {
-	fmt.Fprintln(f.output, s)
+	f.print(s)
 	f.PrintUsage()
 }
 
 func (f *FlagSet) PrintUsage() {
-	fmt.Fprintln(f.output, f.Usage)
+	f.print(f.Usage)
 	defaults := f.Defaults()
 	if defaults != "" {
-		fmt.Fprintln(f.output)
-		fmt.Fprintln(f.output, defaults)
+		f.print()
+		f.print(defaults)
 	}
 }
 
@@ -262,17 +276,21 @@ func (f *FlagSet) Arg(i int) string {
 }
 
 func sortFlags(flags map[string]*Flag) []*Flag {
-	result := make([]*Flag, len(flags))
-	i := 0
+	var (
+		result = make([]*Flag, len(flags))
+		i      int
+	)
 	for _, f := range flags {
 		result[i] = f
 		i++
 	}
-	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
 	return result
 }
 
-func UnquoteUsage(flag *Flag) (name string, usage string) {
+func UnquoteUsage(flag *Flag) (name, usage string) {
 	usage = flag.Usage
 	for i := 0; i < len(usage); i++ {
 		if usage[i] == '`' {

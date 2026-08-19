@@ -19,17 +19,21 @@ type Cmd struct {
 	Fallback bool
 	code     chan int
 }
+
 type CmdFunc func(*Cmd) int
+
 type cmdTable struct {
 	next atomic.Uint64
 	cmd  []*Cmd
 }
 
-var procs cmdTable
-var Bees = map[string]CmdFunc{}
+var (
+	procs cmdTable
+	Bees  = map[string]CmdFunc{}
+)
 
 func Command(argv ...string) *Cmd {
-	c := &Cmd{}
+	c := new(Cmd)
 	c.Path = argv[0]
 	c.Args = argv
 	c.Stdin = os.Stdin
@@ -49,15 +53,36 @@ func CmdList() (cmds []string) {
 	return
 }
 
+func (c *Cmd) Errorln(a ...any) {
+	_, _ = fmt.Fprintln(c.Stderr, a...)
+}
+
+func (c *Cmd) Println(a ...any) {
+	_, _ = fmt.Fprintln(c.Stdout, a...)
+}
+
+func (c *Cmd) Errorf(format string, a ...any) {
+	_, _ = fmt.Fprintf(c.Stderr, format, a...)
+}
+
+func (c *Cmd) Printf(format string, a ...any) {
+	_, _ = fmt.Fprintf(c.Stdout, format, a...)
+}
+
+func (c *Cmd) Print(a ...any) {
+	_, _ = fmt.Fprint(c.Stdout, a...)
+}
+
 func (c *Cmd) Default() int {
 	// TODO: word wrap
-	fmt.Fprintf(c.Stderr, "Usage: buzzybox [command]\nCommands: %s\n",
-		strings.Join(CmdList(), ", "))
+	c.Errorf("Usage: buzzybox [command]\nCommands: %s\n",
+		strings.Join(CmdList(), ", "),
+	)
 	return 1
 }
 
 func (c *Cmd) BadCmd() int {
-	fmt.Fprintln(c.Stderr, "bad command:", c.Cmd.Args[0])
+	c.Errorln("bad command:", c.Cmd.Args[0])
 	return 1
 }
 

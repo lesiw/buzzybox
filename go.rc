@@ -1,0 +1,8 @@
+test (
+	go run lesiw.io/tools/cmd/vet@v0.7.0 $GOARGS
+	CGO_ENABLED=0 go test $GOARGS -shuffle=on -timeout=5s $GOFLAGS
+	CGO_ENABLED=1 go test $GOARGS -shuffle=on -timeout=30s -race $GOFLAGS
+)
+vet go run lesiw.io/tools/cmd/vet@v0.7.0 $GOARGS $GOFLAGS
+fix go run lesiw.io/tools/cmd/vet@v0.7.0 -fix $GOARGS $GOFLAGS
+clerk go run lesiw.io/tools/cmd/clerk@v0.7.0 app

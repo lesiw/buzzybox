@@ -70,12 +70,12 @@ func (l *lexer) peek(n int) rune {
 func (l *lexer) tpeek(n int) *token {
 	i := len(l.tokens) - 1 + n
 	if i < 0 || i > len(l.tokens)-1 {
-		return &token{}
+		return new(token)
 	}
 	return l.tokens[i]
 }
 
-func (l *lexer) rowcol() (row int, col int) {
+func (l *lexer) rowcol() (row, col int) {
 	for i := 0; i < l.pos; i++ {
 		col++
 		if l.input[i] == '\n' {
@@ -87,9 +87,10 @@ func (l *lexer) rowcol() (row int, col int) {
 }
 
 func (l *lexer) line(row int) string {
-	ret := new(strings.Builder)
-	seekrow := 0
-	offset := 0
+	var (
+		ret             = new(strings.Builder)
+		seekrow, offset int
+	)
 	for {
 		if offset > len(l.input)-1 {
 			return ""
@@ -129,10 +130,12 @@ func (l *lexer) lex(s string) ([]*token, error) {
 		if l.peek(0) == ' ' || l.peek(0) == '\t' {
 			l.next()
 			continue
-		} else if m := lnct.FindStringSubmatch(string(l.input[l.pos:])); m != nil {
+		}
+		if m := lnct.FindStringSubmatch(string(l.input[l.pos:])); m != nil {
 			l.pos += len([]rune(m[0]))
 			continue
-		} else if l.skipcomment() {
+		}
+		if l.skipcomment() {
 			continue
 		}
 		tok = nil
@@ -154,7 +157,7 @@ func (l *lexer) lex(s string) ([]*token, error) {
 	return l.tokens, nil
 }
 
-func (l *lexer) newLexError(row int, col int, format string, a ...any) *lexError {
+func (l *lexer) newLexError(row, col int, format string, a ...any) *lexError {
 	return &lexError{
 		reason: fmt.Sprintf(format, a...),
 		row:    row,
@@ -168,9 +171,11 @@ func (e *lexError) Error() string {
 }
 
 func (e *lexError) Pretty() string {
-	prefix := fmt.Sprintf("line %d: ", e.row+1)
-	line := e.lexer.line(e.row)
-	pad := &strings.Builder{}
+	var (
+		prefix = fmt.Sprintf("line %d: ", e.row+1)
+		line   = e.lexer.line(e.row)
+		pad    = new(strings.Builder)
+	)
 	pad.WriteString(strings.Repeat(" ", len(prefix)))
 	for i, c := range line {
 		if i >= e.col {
@@ -219,8 +224,10 @@ func (e *tokenError) Reason() string {
 }
 
 func (e *tokenError) Pretty() string {
-	row := e.token.row
-	col := e.token.col
+	var (
+		row = e.token.row
+		col = e.token.col
+	)
 	if e.token.kind == "" && len(e.lexer.tokens) > 1 {
 		tok := e.lexer.tokens[len(e.lexer.tokens)-1]
 		row = tok.row
@@ -228,7 +235,7 @@ func (e *tokenError) Pretty() string {
 	}
 	prefix := fmt.Sprintf("line %d: ", row+1)
 	line := e.lexer.line(row)
-	pad := &strings.Builder{}
+	pad := new(strings.Builder)
 	pad.WriteString(strings.Repeat(" ", len(prefix)))
 	for i, c := range line {
 		if i >= col {
@@ -262,7 +269,7 @@ func dlPat(kind string, delimiter rune) *fnPattern {
 		}
 
 		pos := l.pos
-		name := strings.Builder{}
+		var name strings.Builder
 		row, col := l.rowcol()
 		defer func() { l.pos = pos }()
 		for {
@@ -316,12 +323,11 @@ func (p *fnPattern) Match(l *lexer) *token {
 	return p.fn(l)
 }
 
-func (p *stPattern) Match(l *lexer) *token {
+func (p *stPattern) Match(l *lexer) (tok *token) {
 	st := p.st
 	if len(p.st) == 0 {
 		st = []string{p.kind}
 	}
-	var tok *token
 	for _, s := range st {
 		if tok != nil && len(s) < tok.len {
 			continue
@@ -331,7 +337,9 @@ func (p *stPattern) Match(l *lexer) *token {
 		}
 		if string(l.input[l.pos:l.pos+len(s)]) == s {
 			row, col := l.rowcol()
-			tok = &token{name: s, kind: p.kind, row: row, col: col, len: len(s)}
+			tok = &token{
+				name: s, kind: p.kind, row: row, col: col, len: len(s),
+			}
 		}
 	}
 	return tok

@@ -1,7 +1,6 @@
 package hive
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -24,7 +23,8 @@ func Basename(cmd *Cmd) int {
 		suffix   = flags.String("s", "Remove `suffix` (implies -a)")
 	)
 	flags.Usage = basenameUsage
-	if err := flags.Parse(cmd.Args[1:]...); err != nil || len(flags.Args) == 0 {
+	err := flags.Parse(cmd.Args[1:]...)
+	if err != nil || len(flags.Args) == 0 {
 		if err == nil {
 			flags.PrintError("error: needs 1 argument")
 		}
@@ -33,7 +33,7 @@ func Basename(cmd *Cmd) int {
 	if *allNames || *suffix != "" {
 		names = flags.Args
 	} else if len(flags.Args) > 2 {
-		fmt.Fprintln(cmd.Stderr, "error: too many arguments")
+		cmd.Errorln("error: too many arguments")
 		return 1
 	} else {
 		*suffix = flags.Arg(1)
@@ -44,7 +44,7 @@ func Basename(cmd *Cmd) int {
 		if *suffix != "" {
 			name = strings.TrimSuffix(name, *suffix)
 		}
-		fmt.Fprintln(cmd.Stdout, name)
+		cmd.Println(name)
 	}
 	return 0
 }

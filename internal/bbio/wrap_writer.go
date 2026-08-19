@@ -20,8 +20,10 @@ func (ww *WrapWriter) Write(buf []byte) (n int, err error) {
 	for cl := 0; len(buf) > 0 && err == nil; {
 		cl = (ww.n + n) % ww.c
 		if cl+len(buf) > ww.c {
-			len := ww.c - cl
-			wbuf := make([]byte, len+1)
+			var (
+				len  = ww.c - cl
+				wbuf = make([]byte, len+1)
+			)
 			copy(wbuf, buf[:len])
 			wbuf[len] = '\n'
 			_, err = ww.w.Write(wbuf)

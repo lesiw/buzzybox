@@ -17,7 +17,8 @@ import (
 	"lesiw.io/buzzybox/internal/posix"
 )
 
-const awkUsage = `usage: awk [-v VAR=VAL...] [-F SEP] [-f PROGRAM_FILE | PROGRAM] [FILE...]
+const awkUsage = `usage: ` +
+	`awk [-v VAR=VAL...] [-F SEP] [-f PROGRAM_FILE | PROGRAM] [FILE...]
 
 A pattern scanning and processing language.`
 
@@ -47,7 +48,7 @@ func Awk(cmd *Cmd) (code int) {
 	for _, f := range *progfiles {
 		txt, err := os.ReadFile(f)
 		if err != nil {
-			fmt.Fprintf(cmd.Stderr, "bad file: %s\n", f)
+			cmd.Errorf("bad file: %s\n", f)
 			return 1
 		}
 		prog += string(txt)
@@ -64,12 +65,12 @@ func Awk(cmd *Cmd) (code int) {
 	for _, v := range *vars {
 		varval := strings.SplitN(v, "=", 2)
 		if len(varval) != 2 {
-			fmt.Fprintf(cmd.Stderr, "bad variable, want VAR=VAL: %s\n", v)
+			cmd.Errorf("bad variable, want VAR=VAL: %s\n", v)
 			return 1
 		}
 		var val string
 		if val, err = p.unescape(varval[1]); err != nil {
-			fmt.Fprintf(cmd.Stderr, "bad escape: %s\n", v)
+			cmd.Errorf("bad escape: %s\n", v)
 		}
 		p.sym(varval[0]).SetString(val)
 	}
@@ -132,7 +133,7 @@ type awkfn struct {
 	block  *token
 }
 
-type awkframe struct {
+type awkframe struct { //ignore:singlefield
 	symbols map[string]*awkcell
 }
 
@@ -195,8 +196,23 @@ func newawkp(cmd *Cmd) *awkp {
 		"while":    p.whilestmt,
 	}
 	exprFns := []func(awkeval, bool, strset) (val *awkcell, err error){
-		p.assign, p.cond, p.or, p.and, p.inarray, p.ere, p.cmp, p.concat, p.add,
-		p.multiply, p.unary, p.exp, p.prefixop, p.postfixop, p.fieldref, p.group, p.val,
+		p.assign,
+		p.cond,
+		p.or,
+		p.and,
+		p.inarray,
+		p.ere,
+		p.cmp,
+		p.concat,
+		p.add,
+		p.multiply,
+		p.unary,
+		p.exp,
+		p.prefixop,
+		p.postfixop,
+		p.fieldref,
+		p.group,
+		p.val,
 	}
 	p.exprs = make([]awkeval, len(exprFns)+1)
 	for i := len(exprFns) - 1; i >= 0; i-- {
@@ -206,7 +222,8 @@ func newawkp(cmd *Cmd) *awkp {
 			}
 		}(i)
 	}
-	// '/' is ambiguous (division vs. start of regex); lex it based on the previous token.
+	// '/' is ambiguous (division vs. start of regex); lex it based on
+	// the previous token.
 	ere := fnPat("ere", func(l *lexer) *token {
 		switch l.tpeek(0).kind {
 		case ")", "name", "number", "string":
@@ -216,23 +233,79 @@ func newawkp(cmd *Cmd) *awkp {
 		}
 	})
 	patterns := []matcher{
-		dlPat("string", '"'), ere, stPat("begin", "BEGIN"), stPat("end", "END"),
-		stPat("break"), stPat("continue"), stPat("delete"), stPat("do"), stPat("else"),
-		stPat("exit"), stPat("for"), stPat("function"), stPat("if"), stPat("in"),
-		stPat("next"), stPat("nextfile"), stPat("printf"), stPat("print"), stPat("return"),
-		stPat("while"), stPat("getline"), stPat("+="), stPat("-="), stPat("*="),
-		stPat("/="), stPat("%="), stPat("^="), stPat("**="), stPat("||"), stPat("&&"),
-		stPat("=="), stPat("<="), stPat(">="), stPat("!="), stPat("++"), stPat("--"),
-		stPat(">>"), stPat("{"), stPat("}"), stPat("("), stPat(")"), stPat("["),
-		stPat("]"), stPat(","), stPat(";"), stPat("\n"), stPat("+"), stPat("-"),
-		stPat("*"), stPat(`/`), stPat("%"), stPat("^"), stPat("**"), stPat("!"),
-		stPat(">"), stPat("<"), stPat("|"), stPat("?"), stPat(":"), stPat("~"), stPat("$"),
-		stPat("="), stPat("builtin_func", "atan2", "cos", "sin", "exp", "log", "sqrt",
-			"int", "rand", "srand", "gsub", "index", "length", "match", "split",
-			"sprintf", "sub", "substr", "tolower", "toupper", "close", "system"),
+		dlPat("string", '"'),
+		ere,
+		stPat("begin", "BEGIN"),
+		stPat("end", "END"),
+		stPat("break"),
+		stPat("continue"),
+		stPat("delete"),
+		stPat("do"),
+		stPat("else"),
+		stPat("exit"),
+		stPat("for"),
+		stPat("function"),
+		stPat("if"),
+		stPat("in"),
+		stPat("next"),
+		stPat("nextfile"),
+		stPat("printf"),
+		stPat("print"),
+		stPat("return"),
+		stPat("while"),
+		stPat("getline"),
+		stPat("+="),
+		stPat("-="),
+		stPat("*="),
+		stPat("/="),
+		stPat("%="),
+		stPat("^="),
+		stPat("**="),
+		stPat("||"),
+		stPat("&&"),
+		stPat("=="),
+		stPat("<="),
+		stPat(">="),
+		stPat("!="),
+		stPat("++"),
+		stPat("--"),
+		stPat(">>"),
+		stPat("{"),
+		stPat("}"),
+		stPat("("),
+		stPat(")"),
+		stPat("["),
+		stPat("]"),
+		stPat(","),
+		stPat(";"),
+		stPat("\n"),
+		stPat("+"),
+		stPat("-"),
+		stPat("*"),
+		stPat(`/`),
+		stPat("%"),
+		stPat("^"),
+		stPat("**"),
+		stPat("!"),
+		stPat(">"),
+		stPat("<"),
+		stPat("|"),
+		stPat("?"),
+		stPat(":"),
+		stPat("~"),
+		stPat("$"),
+		stPat("="),
+		stPat("builtin_func", "atan2", "cos", "sin", "exp", "log",
+			"sqrt", "int", "rand", "srand", "gsub", "index",
+			"length", "match", "split", "sprintf", "sub", "substr",
+			"tolower", "toupper", "close", "system",
+		),
 		rePat("func_name", regexp.MustCompile(`(^[a-zA-Z_][a-zA-Z0-9_]*)\(`)),
 		rePat("name", regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]*")),
-		rePat("number", regexp.MustCompile(`^[0-9]*(?:\.[0-9]+)?(?:[Ee]-?[0-9]+)?`)),
+		rePat(
+			"number",
+			regexp.MustCompile(`^[0-9]*(?:\.[0-9]+)?(?:[Ee]-?[0-9]+)?`),
+		),
 	}
 	p.lexer = &lexer{
 		patterns: patterns,
@@ -361,7 +434,9 @@ func (p *awkp) exec() (code int, err error) {
 	var val *awkcell
 	defer func() {
 		if r := recover(); r != nil {
-			prettyPrintError(p.cmd.Stderr, p.lexer.newTokenErrorf(p.peek(0), "panic"))
+			prettyPrintError(
+				p.cmd.Stderr, p.lexer.newTokenErrorf(p.peek(0), "panic"),
+			)
 			panic(r)
 		}
 	}()
@@ -453,7 +528,9 @@ func (p *awkp) itemskip(i *awkitem) (skip bool, err error) {
 			skip = true
 		}
 	default:
-		err = p.lexer.newTokenErrorf(i.token, "bad exprlist: want 0-2, got %d", len(vals))
+		err = p.lexer.newTokenErrorf(
+			i.token, "bad exprlist: want 0-2, got %d", len(vals),
+		)
 	}
 	return
 }
@@ -463,8 +540,8 @@ func (p *awkp) itemblock() (val *awkcell, err error) {
 		val, err = p.evalblock(true)
 	} else {
 		// Implicit "{ print }".
-		fmt.Fprint(p.cmd.Stdout, p.Field(0).String())
-		fmt.Fprint(p.cmd.Stdout, p.sym("ORS").String())
+		p.cmd.Print(p.Field(0).String())
+		p.cmd.Print(p.sym("ORS").String())
 	}
 	return
 }
@@ -539,7 +616,7 @@ func (p *awkp) nextreader() (err error) {
 			// TODO: replace with hive.FS
 			file, err := os.Open(arg)
 			if err != nil {
-				return fmt.Errorf("bad file '%s': %s", arg, err)
+				return fmt.Errorf("bad file '%s': %w", arg, err)
 			}
 			p.filereader = bufio.NewReader(file)
 			p.readfile = true
@@ -561,9 +638,11 @@ func (p *awkp) skiptorecord(reader io.RuneScanner) error {
 }
 
 func (p *awkp) readrecord(reader io.RuneScanner) (string, error) {
-	var record strings.Builder
-	var r, pr, sr rune
-	var err error
+	var (
+		record    strings.Builder
+		r, pr, sr rune
+		err       error
+	)
 	if p.sym("RS").String() != "" {
 		sr = []rune(p.sym("RS").String())[0]
 	}
@@ -678,8 +757,10 @@ func (p *awkp) deletestmt(exec bool, _ strset) (val *awkcell, err error) {
 }
 
 func (p *awkp) dostmt(exec bool, stop strset) (val *awkcell, err error) {
-	start := p.pos
-	var whileval *awkcell
+	var (
+		start    = p.pos
+		whileval *awkcell
+	)
 	for {
 		p.pos = start
 		val, err = p.evalstmt(exec, stop)
@@ -769,11 +850,13 @@ func (p *awkp) printfstmt(exec bool, _ strset) (val *awkcell, err error) {
 }
 
 func (p *awkp) print(exec bool, s string) (err error) {
-	var w io.Writer = p.cmd.Stdout
+	w := p.cmd.Stdout
 	if p.matchany(">", ">>", "|") {
-		tok := p.peek(-1)
-		op := tok.kind
-		var val *awkcell
+		var (
+			tok = p.peek(-1)
+			op  = tok.kind
+			val *awkcell
+		)
 		if val, err = p.expr(exec, p.stopexpr); err != nil || !exec {
 			return
 		}
@@ -789,13 +872,15 @@ func (p *awkp) print(exec bool, s string) (err error) {
 				// TODO: replace with hive.FS
 				if w, err = os.OpenFile(val.String(), mode, 0644); err != nil {
 					return p.lexer.newTokenErrorf(tok, "bad file '%s': %s",
-						val.String(), err)
+						val.String(), err,
+					)
 				}
 			} else {
 				cmd := p.cmd.spawn("sh", "-c", val.String())
 				if w, err = cmd.StdinCloser(); err != nil {
 					return p.lexer.newTokenErrorf(tok, "bad command '%s': %s",
-						val.String(), err)
+						val.String(), err,
+					)
 				}
 				cmd.Start()
 			}
@@ -805,7 +890,7 @@ func (p *awkp) print(exec bool, s string) (err error) {
 	if !exec {
 		return
 	}
-	fmt.Fprint(w, s)
+	_, err = io.WriteString(w, s)
 	return
 }
 
@@ -825,7 +910,7 @@ func (p *awkp) forstmt(exec bool, stop strset) (*awkcell, error) {
 	}
 }
 
-func (p *awkp) forstmta(exec bool, loopval *awkcell, arrval *awkcell) (val *awkcell, err error) {
+func (p *awkp) forstmta(exec bool, loopval, arrval *awkcell) (val *awkcell, err error) {
 	pos := p.pos
 loop:
 	for i := range arrval.arrval.contents {
@@ -886,7 +971,7 @@ func (p *awkp) forstmtc(exec bool, _ strset) (val *awkcell, err error) {
 	}
 }
 
-func (p *awkp) forheader(exec bool, init bool) (doloop bool, err error) {
+func (p *awkp) forheader(exec, init bool) (doloop bool, err error) {
 	var val *awkcell
 	if err = p.mustmatch("("); err != nil {
 		return
@@ -939,7 +1024,8 @@ func (p *awkp) ifstmt(exec bool, stop strset) (val *awkcell, err error) {
 		return
 	}
 	for {
-		if val, err = p.evalstmt(exec && ifval.Bool(), p.stopstmt); err != nil {
+		val, err = p.evalstmt(exec && ifval.Bool(), p.stopstmt)
+		if err != nil {
 			return
 		}
 		if exec && ifval.Bool() {
@@ -961,8 +1047,10 @@ func (p *awkp) ifstmt(exec bool, stop strset) (val *awkcell, err error) {
 }
 
 func (p *awkp) whilestmt(exec bool, stop strset) (val *awkcell, err error) {
-	start := p.pos
-	var whileval *awkcell
+	var (
+		start    = p.pos
+		whileval *awkcell
+	)
 	for {
 		p.pos = start
 		if whileval, err = p.exprp(exec, p.stopexpr); err != nil {
@@ -1009,11 +1097,14 @@ func (p *awkp) exprpipe(in *awkcell, exec bool, stop strset) (val *awkcell, err 
 	}
 	r := p.readers[in.String()]
 	if exec && r == nil {
-		cmd := p.cmd.spawn("sh", "-c", in.String())
-		var rc io.ReadCloser
+		var (
+			cmd = p.cmd.spawn("sh", "-c", in.String())
+			rc  io.ReadCloser
+		)
 		if rc, err = cmd.StdoutCloser(); err != nil {
 			err = p.lexer.newTokenErrorf(tok, "bad command '%s': %s",
-				in.String(), err)
+				in.String(), err,
+			)
 			return
 		}
 		cmd.Start()
@@ -1187,9 +1278,11 @@ func (p *awkp) and(next awkeval, exec bool, stop strset) (val *awkcell, err erro
 }
 
 func (p *awkp) inarray(next awkeval, exec bool, stop strset) (val *awkcell, err error) {
-	var arr *awkcell
-	var idx string
-	pos := p.pos
+	var (
+		arr *awkcell
+		idx string
+		pos = p.pos
+	)
 	if p.match("(", "exprlist", ")", "in") {
 		var vals []*awkcell
 		p.pos = pos
@@ -1219,8 +1312,10 @@ func (p *awkp) inarray(next awkeval, exec bool, stop strset) (val *awkcell, err 
 }
 
 func (p *awkp) ere(next awkeval, exec bool, stop strset) (val *awkcell, err error) {
-	var rval *awkcell
-	var m bool
+	var (
+		rval *awkcell
+		m    bool
+	)
 	if val, err = next(exec, stop); err != nil {
 		return
 	}
@@ -1242,7 +1337,9 @@ func (p *awkp) ere(next awkeval, exec bool, stop strset) (val *awkcell, err erro
 			var re *regexp.Regexp
 			re, err = regexp.CompilePOSIX(rval.String())
 			if err != nil {
-				return nil, p.lexer.newTokenErrorf(p.peek(0), "bad regex: %s", err)
+				return nil, p.lexer.newTokenErrorf(
+					p.peek(0), "bad regex: %s", err,
+				)
 			}
 			r := re.MatchString(val.String())
 			if m {
@@ -1293,7 +1390,7 @@ func (p *awkp) cmp(next awkeval, exec bool, stop strset) (val *awkcell, err erro
 	return
 }
 
-func (p *awkp) cmpvals(lval *awkcell, rval *awkcell) int {
+func (p *awkp) cmpvals(lval, rval *awkcell) int {
 	if lval.IsString() || rval.IsString() {
 		return cmp.Compare(lval.String(), rval.String())
 	} else {
@@ -1572,7 +1669,7 @@ func (p *awkp) strval(tok *token, exec bool) (val *awkcell, err error) {
 		return
 	}
 	if str, err := p.unescape(tok.name); err != nil {
-		return nil, p.lexer.newTokenErrorf(tok, err.Error())
+		return nil, p.lexer.newTokenErrorf(tok, "%s", err.Error())
 	} else {
 		val = p.string(str)
 	}
@@ -1610,8 +1707,10 @@ func (p *awkp) ererecord(s string) (val *awkcell, err error) {
 }
 
 func (p *awkp) getlinefn(exec bool) (val *awkcell, err error) {
-	var r runeScanCloser
-	set := p.Field(0)
+	var (
+		r   runeScanCloser
+		set = p.Field(0)
+	)
 	if p.match("name") {
 		set = p.sym(p.peek(-1).name)
 	}
@@ -1660,7 +1759,9 @@ func (p *awkp) builtin(name string, exec bool) (val *awkcell, err error) {
 	}
 	val, err = fn(args)
 	if err != nil {
-		err = p.lexer.newTokenErrorf(p.fntok[len(p.fntok)-1], err.Error())
+		err = p.lexer.newTokenErrorf(
+			p.fntok[len(p.fntok)-1], "%s", err.Error(),
+		)
 	}
 	return
 }
@@ -1668,7 +1769,9 @@ func (p *awkp) builtin(name string, exec bool) (val *awkcell, err error) {
 func (p *awkp) fn(name string, exec bool) (val *awkcell, err error) {
 	fn := p.sym(name).fnval
 	if fn == nil {
-		return nil, p.lexer.newTokenErrorf(p.peek(-1), "bad function: %s", name)
+		return nil, p.lexer.newTokenErrorf(
+			p.peek(-1), "bad function: %s", name,
+		)
 	}
 	var args []*awkcell
 	if args, err = p.exprlistp(exec, p.stopexprlist); err != nil {
@@ -1800,7 +1903,7 @@ func (p *awkp) matchfn(args []*awkcell) (val *awkcell, err error) {
 	pat := args[1].String()
 	var re *regexp.Regexp
 	if re, err = regexp.CompilePOSIX(pat); err != nil {
-		err = fmt.Errorf("bad regex: %s", err)
+		err = fmt.Errorf("bad regex: %w", err)
 		return
 	}
 	idx := re.FindStringIndex(s)
@@ -1838,22 +1941,22 @@ func (p *awkp) gsubfn(args []*awkcell) (val *awkcell, err error) {
 	}
 	var re *regexp.Regexp
 	if re, err = regexp.CompilePOSIX(pat); err != nil {
-		err = fmt.Errorf("bad regex: %s", err)
+		err = fmt.Errorf("bad regex: %w", err)
 		return
 	}
 	var count int
 	in.SetString(re.ReplaceAllStringFunc(in.String(), func(s string) string {
 		count++
 		m := re.FindString(s)
-		var r string
+		var r strings.Builder
 		for i, c := range rpl {
 			if c == '&' && (i == 0 || rpl[i-1] != '\\') {
-				r += m
+				r.WriteString(m)
 			} else if !(c == '\\' && i < len(rpl)-1 && rpl[i+1] == '&') {
-				r += string(c)
+				r.WriteString(string(c))
 			}
 		}
-		return re.ReplaceAllString(s, r)
+		return re.ReplaceAllString(s, r.String())
 	}))
 	val = p.num(float64(count))
 	return
@@ -1944,7 +2047,7 @@ func (p *awkp) subfn(args []*awkcell) (val *awkcell, err error) {
 	}
 	var re *regexp.Regexp
 	if re, err = regexp.CompilePOSIX(pat); err != nil {
-		err = fmt.Errorf("bad regex: %s", err)
+		err = fmt.Errorf("bad regex: %w", err)
 		return
 	}
 	var count int
@@ -1954,15 +2057,15 @@ func (p *awkp) subfn(args []*awkcell) (val *awkcell, err error) {
 		}
 		count++
 		m := re.FindString(s)
-		var r string
+		var r strings.Builder
 		for i, c := range rpl {
 			if c == '&' && (i == 0 || rpl[i-1] != '\\') {
-				r += m
+				r.WriteString(m)
 			} else if !(c == '\\' && i < len(rpl)-1 && rpl[i+1] == '&') {
-				r += string(c)
+				r.WriteString(string(c))
 			}
 		}
-		return re.ReplaceAllString(s, r)
+		return re.ReplaceAllString(s, r.String())
 	}))
 	val = p.num(float64(count))
 	return
@@ -1982,10 +2085,7 @@ func (p *awkp) substrfn(args []*awkcell) (val *awkcell, err error) {
 		m = 0
 	}
 	if len(args) > 2 {
-		n = int(args[2].Num())
-		if n < 0 {
-			n = 0
-		}
+		n = max(int(args[2].Num()), 0)
 	}
 	if m+n > len(s) {
 		val = p.string(string(s[m:]))
@@ -2069,7 +2169,7 @@ func (p *awkp) ftor() error {
 
 func (p *awkp) peek(n int) *token {
 	if p.pos+n < 0 || p.pos+n > len(p.tokens)-1 {
-		return &token{}
+		return new(token)
 	}
 	return p.tokens[p.pos+n]
 }
@@ -2106,7 +2206,8 @@ func (p *awkp) mustmatch(kind ...string) error {
 	for _, k := range kind {
 		if !p.match(k) {
 			return p.lexer.newTokenErrorf(p.peek(0), "want %s, got %s",
-				k, p.peek(0).kind)
+				k, p.peek(0).kind,
+			)
 		}
 	}
 	return nil
@@ -2146,8 +2247,10 @@ func (p *awkp) matchnewlines() (matched bool) {
 }
 
 func (p *awkp) unescape(s string) (string, error) {
-	runes := []rune(s)
-	var ret strings.Builder
+	var (
+		runes = []rune(s)
+		ret   strings.Builder
+	)
 	for i := 0; i < len(runes); i++ {
 		if runes[i] != '\\' || i >= len(runes)-1 {
 			ret.WriteRune(runes[i])
@@ -2179,9 +2282,11 @@ func (p *awkp) unescape(s string) (string, error) {
 }
 
 func (p *awkp) sprintf(fmtstr string, a []*awkcell) (string, error) {
-	var result strings.Builder
-	var arg int
-	format := []rune(fmtstr)
+	var (
+		result strings.Builder
+		arg    int
+		format = []rune(fmtstr)
+	)
 	for i := 0; i < len(format); i++ {
 		if format[i] != '%' || i+1 >= len(format) {
 			result.WriteRune(format[i])
@@ -2234,7 +2339,9 @@ func (p *awkp) sprintfv(result *strings.Builder, verb string, val *awkcell) erro
 		result.WriteString(fmt.Sprintf(verb, uint64(int64(val.Num()))))
 	case 'u':
 		verbsl[len(verbsl)-1] = 'd'
-		result.WriteString(fmt.Sprintf(string(verbsl), uint64(int64(val.Num()))))
+		result.WriteString(
+			fmt.Sprintf(string(verbsl), uint64(int64(val.Num()))),
+		)
 	case 'g', 'G':
 		if verb == "%g" {
 			verb = "%.6g"
@@ -2252,7 +2359,7 @@ func (p *awkp) join(vals []*awkcell, by string) string {
 	var s strings.Builder
 	for i, v := range vals {
 		if v == nil {
-			v = &awkcell{}
+			v = new(awkcell)
 		}
 		if i > 0 {
 			s.WriteString(by)
@@ -2324,8 +2431,10 @@ func (p *awkp) splitregex(re *regexp.Regexp, s string, a fielder) (count int) {
 }
 
 func (p *awkp) splitrune(fs rune, s string, a fielder) (count int) {
-	var rs = p.sym("RS").String()
-	var field strings.Builder
+	var (
+		rs    = p.sym("RS").String()
+		field strings.Builder
+	)
 	for _, r := range s {
 		if r == fs || (rs == "" && r == '\n') {
 			count++
@@ -2460,7 +2569,7 @@ func (c *awkcell) SetBool(b bool) {
 
 func (c *awkcell) Arr() *awkmap {
 	if c.arrval == nil {
-		c.arrval = &awkmap{}
+		c.arrval = new(awkmap)
 	}
 	return c.arrval
 }
@@ -2496,7 +2605,7 @@ func (c *awkcell) SetField(i int, o *awkcell) {
 
 func (c *awkcell) Fn() *awkfn {
 	if c.fnval == nil {
-		c.fnval = &awkfn{}
+		c.fnval = new(awkfn)
 	}
 	return c.fnval
 }
@@ -2600,9 +2709,11 @@ func (m *awkmap) rehash() {
 	nc := make([]*awkcell, m.size)
 	for i := range m.contents {
 		for c := m.contents[i]; c != nil; {
-			next := c.next
-			hash := m.hash(c.name)
-			ncc := nc[hash]
+			var (
+				next = c.next
+				hash = m.hash(c.name)
+				ncc  = nc[hash]
+			)
 			c.next = ncc
 			nc[hash] = c
 			c = next

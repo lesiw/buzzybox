@@ -2,7 +2,6 @@ package hive
 
 import (
 	"encoding/base64"
-	"fmt"
 	"io"
 	"os"
 
@@ -19,9 +18,13 @@ func init() {
 }
 
 func Base64(cmd *Cmd) int {
-	flags := flag.NewFlagSet(cmd.Stderr, "base64")
-	decode := flags.Bool("d", "Decode")
-	wrap := flags.Int("w", "Wrap output at `columns` (default 76, 0 to disable)")
+	var (
+		flags  = flag.NewFlagSet(cmd.Stderr, "base64")
+		decode = flags.Bool("d", "Decode")
+		wrap   = flags.Int(
+			"w", "Wrap output at `columns` (default 76, 0 to disable)",
+		)
+	)
 	flags.Usage = base64Usage
 	if err := flags.Parse(cmd.Args[1:]...); err != nil {
 		return 1
@@ -33,7 +36,7 @@ func Base64(cmd *Cmd) int {
 		file = cmd.Stdin
 	case 1:
 		if file, err = os.Open(flags.Args[0]); err != nil {
-			fmt.Fprintln(cmd.Stderr, err)
+			cmd.Errorln(err)
 			return 1
 		}
 	default:
@@ -44,19 +47,23 @@ func Base64(cmd *Cmd) int {
 		*wrap = 76
 	}
 	if *decode {
-		_, err := io.Copy(cmd.Stdout, base64.NewDecoder(base64.StdEncoding, file))
+		_, err := io.Copy(
+			cmd.Stdout, base64.NewDecoder(base64.StdEncoding, file),
+		)
 		if err != nil {
-			fmt.Fprintln(cmd.Stderr, err)
+			cmd.Errorln(err)
 			return 1
 		}
 	} else {
-		w := bbio.NewWrapWriter(cmd.Stdout, *wrap)
-		encoder := base64.NewEncoder(base64.StdEncoding, w)
+		var (
+			w       = bbio.NewWrapWriter(cmd.Stdout, *wrap)
+			encoder = base64.NewEncoder(base64.StdEncoding, w)
+		)
 		_, err := io.Copy(encoder, file)
 		_ = encoder.Close()
-		fmt.Fprintln(cmd.Stdout)
+		cmd.Println()
 		if err != nil {
-			fmt.Fprintln(cmd.Stderr, err)
+			cmd.Errorln(err)
 			return 1
 		}
 	}

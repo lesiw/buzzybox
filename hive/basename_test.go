@@ -1,7 +1,7 @@
 package hive_test
 
 import (
-	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -40,17 +40,21 @@ func TestBasenameAllNames(t *testing.T) {
 		argv: []string{"basename", "-a", "/path/to/file.txt"},
 		want: []string{"file.txt"},
 	}, {
-		argv: []string{"basename", "-a", "/path/to/file.txt", "/path/to/file2.txt"},
+		argv: []string{
+			"basename", "-a", "/path/to/file.txt", "/path/to/file2.txt",
+		},
 		want: []string{"file.txt", "file2.txt"},
 	}, {
-		argv: []string{"basename", "-a", "/path/to/file.txt", "/path/to/file2.txt",
-			"/path/to/file3.txt"},
+		argv: []string{
+			"basename", "-a", "/path/to/file.txt", "/path/to/file2.txt",
+			"/path/to/file3.txt",
+		},
 		want: []string{"file.txt", "file2.txt", "file3.txt"},
 	}}
 
 	for _, tc := range testCases {
 		result := runN(t, tc.argv...)
-		if !reflect.DeepEqual(result, tc.want) {
+		if !slices.Equal(result, tc.want) {
 			t.Errorf("%s = '%s', want '%s'", tc.argv, result, tc.want)
 		}
 	}
@@ -64,21 +68,25 @@ func TestBasenameSuffixes(t *testing.T) {
 		argv: []string{"basename", "/path/to/file.txt", ".txt"},
 		want: []string{"file"},
 	}, {
-		argv: []string{"basename", "-s.txt", "/path/to/file.txt", "/path/to/file2.txt"},
+		argv: []string{
+			"basename", "-s.txt", "/path/to/file.txt", "/path/to/file2.txt",
+		},
 		want: []string{"file", "file2"},
 	}, {
 		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt",
 			"/path/to/file2.txt"},
 		want: []string{"file", "file2"},
 	}, {
-		argv: []string{"basename", "-s", ".txt", "/path/to/file.txt", "/path/to/file2.txt",
-			"/path/to/file3.txt"},
+		argv: []string{
+			"basename", "-s", ".txt", "/path/to/file.txt",
+			"/path/to/file2.txt", "/path/to/file3.txt",
+		},
 		want: []string{"file", "file2", "file3"},
 	}}
 
 	for _, tc := range testCases {
 		result := runN(t, tc.argv...)
-		if !reflect.DeepEqual(result, tc.want) {
+		if !slices.Equal(result, tc.want) {
 			t.Errorf("%s = '%s', want '%s'", tc.argv, result, tc.want)
 		}
 	}
